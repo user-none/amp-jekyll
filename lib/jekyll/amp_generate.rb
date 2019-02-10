@@ -8,10 +8,11 @@ module Jekyll
       # Needed for posts with permalink
       @url = dir
       @name = 'index.html'
+
       self.process(@name)
       self.read_yaml(File.join(base, '_layouts'), 'amp.html')
-      self.content               = post.content
-      self.data['body']          = (Liquid::Template.parse post.content).render site.site_payload
+      self.content = post.content
+      self.data['body'] = (Liquid::Template.parse post.content).render site.site_payload
 
       # Merge all data from post so that keys from self.data have higher priority
       self.data = post.data.merge(self.data)
@@ -33,7 +34,7 @@ module Jekyll
       dir = site.config['ampdir'] || 'amp'
       site.posts.docs.each do |post|
         next if post.data['skip_amp'] == true
-        site.pages << AmpPost.new(site, site.source, File.join(dir, post.id), post)
+        site.pages << AmpPost.new(site, site.source, File.join(post.id, dir, 'index.html'), post)
       end
     end
   end

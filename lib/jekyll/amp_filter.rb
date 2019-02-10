@@ -10,6 +10,36 @@ module Jekyll
     #   responsive  - boolean, whether to add layout=responsive, true by default
     def amp_images(input, responsive = true, wi = nil, he = nil)
       doc = Nokogiri::HTML.fragment(input);
+
+      # Restructure some image tags.
+      doc.css('img').each do |image|
+        # Convert data-* to * because this plugin
+        # uses 'src' for alterations of the image.
+        if image['data-src']
+          image['src'] = image['data-src']
+          image.delete('data-src')
+        end
+        if image['data-srcset']
+          image['srcset'] = image['data-srcset']
+          image.delete('data-srcset')
+        end
+
+        # Remove any images that are also in a
+        # noscript tag. We'll add back a noscript
+        # in the proper place later.
+        doc.xpath(".//noscript//img[@src=\"#{image['src']}\"]").each do |nsimg|
+          nsimg.remove
+        end
+      end
+
+      # Remove all empty noscript tags that could
+      # happen from the removal above.
+      doc.css('noscript').each do |ns|
+          if ns.children.count == 0
+              ns.remove
+          end
+      end
+
       # Add width and height to img elements lacking them
       doc.css('img:not([width])').each do |image|
         if wi && he
@@ -36,6 +66,7 @@ module Jekyll
           end
         end
       end
+
       # Change 'img' elements to 'amp-img', add responsive attribute when needed
       doc.css('img').each do |image|
         image.name = "amp-img"
@@ -65,7 +96,7 @@ module Jekyll
       #    <noscript>
       #        <img ... />
       #    </noscript>
-      # </ampimg ...>
+      # </amp-img ...>
       # Duplicate amp-img, remove layout attribut, wrap it with noscript, and add
       # it as amp-img child
       doc.css('amp-img').each do |amp_img|
